@@ -1,0 +1,11 @@
+
+Matrix multiplication
+
+-f filename
+		specify a file to read the matrix from.
+
+-s
+		Run a serial version of the algorithm
+
+-v
+		print all relevant info

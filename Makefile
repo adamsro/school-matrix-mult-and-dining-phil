@@ -1,10 +1,10 @@
-all: dining_phil.o  matrix_parallel.o pdf
+all: dining_phil.o  matrix_mult.o pdf
 
 dining_phil.o:
 	g++ -ggdb3 -Wall -lpthread dining_phil.cpp -o dining_phil
 
-matrix_parallel.o:
-	g++ -ggdb3 -Wall -lpthread matrix_parallel.cpp -o matrix_parallel
+matrix_mult.o:
+	g++ -ggdb3 -Wall -lpthread matrix_mult.cpp -o matrix_mult
 
 clean:
 	rm -rf *o dining_phil main.dvi main.ps main.pdf main.log main.aux main.out dining_phil.dSYM

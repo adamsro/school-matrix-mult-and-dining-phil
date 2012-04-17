@@ -1,10 +1,7 @@
-all: dining_phil.o matrix_serial.o matrix_parallel.o pdf
+all: dining_phil.o  matrix_parallel.o pdf
 
 dining_phil.o:
 	g++ -ggdb3 -Wall -lpthread dining_phil.cpp -o dining_phil
-
-matrix_serial.o:
-	g++ -ggdb3 -Wall -lpthread matrix_serial.cpp -o matrix_serial
 
 matrix_parallel.o:
 	g++ -ggdb3 -Wall -lpthread matrix_parallel.cpp -o matrix_parallel

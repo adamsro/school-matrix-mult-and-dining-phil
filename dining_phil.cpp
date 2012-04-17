@@ -12,6 +12,8 @@ License     :   GNU GPL License
 #include <pthread.h>
 #include <unistd.h>
 
+#include <boost/thread.hpp>
+
 #define N 5
 #define THINKING 0
 #define HUNGRY 1
@@ -22,7 +24,7 @@ License     :   GNU GPL License
 sem_t mutex;
 sem_t S[N];
 
-void * philospher(void *num);
+void philospher(int num);
 void take_fork(int);
 void put_fork(int);
 void test(int);
@@ -30,13 +32,13 @@ void test(int);
 int state[N];
 int phil_num[N]={0,1,2,3,4};
 
-void *philospher(void *num) {
+void philospher(int num) {
     while(1) {
-        int *i = (int*) num;
+        //int *i = (int*) num;
         sleep(1);
-        take_fork(*i);
+        take_fork(num);
         sleep(0);
-        put_fork(*i);
+        put_fork(num);
     }
 }
 
@@ -77,11 +79,14 @@ int main() {
     for(int i = 0;i < N; i++) {
         sem_init(&S[i],0,0);
     }
-    for(int i = 0;i < N; i++) {
-        pthread_create(&thread_id[i], NULL, philospher, &phil_num[i]);
-        printf("Philosopher %d is thinking\n",i+1);
-    }
-    for(i = 0; i < N; i++) {
-        pthread_join(thread_id[i],NULL);
-    }
+
+				boost::thread workerThread(boost::bind(&philospher, 1));
+				workerThread.join();
+    //for(int i = 0;i < N; i++) {
+        //pthread_create(&thread_id[i], NULL, philospher, &phil_num[i]);
+        //printf("Philosopher %d is thinking\n",i+1);
+    //}
+    //for(i = 0; i < N; i++) {
+        //pthread_join(thread_id[i],NULL);
+    //}
 }

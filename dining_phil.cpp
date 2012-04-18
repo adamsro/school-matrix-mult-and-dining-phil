@@ -49,6 +49,7 @@ void take_fork(int ph_num) {
     printf("Philosopher %d is Hungry\n",ph_num+1);
     test(ph_num);
     sem_post(&mutex);
+
     sem_wait(&S[ph_num]);
     sleep(1);
 }
@@ -59,6 +60,7 @@ void test(int ph_num) {
         sleep(2);
         printf("Philosopher %d takes fork %d and %d\n",ph_num+1,LEFT+1,ph_num+1);
         printf("Philosopher %d is Eating\n",ph_num+1);
+
         sem_post(&S[ph_num]);
     }
 }

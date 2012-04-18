@@ -1,0 +1,144 @@
+% Robert Adams	02/07/2012	CS 311
+
+\documentclass[letterpaper,10pt]{article} %twocolumn titlepage 
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+
+\usepackage{alltt}
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+
+\usepackage{geometry}
+\geometry{margin=1in, textheight=8.5in} %textwidth=6in
+
+%random comment
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Robert Adams}
+
+%% The following metadata will show up in the PDF properties
+\hypersetup{
+		colorlinks = true,
+		urlcolor = black,
+		pdfauthor = {\name},
+		pdfkeywords = {cs411``operating systems},
+		pdftitle = {CS411: Assignment 1, Threading},
+		pdfsubject = {CS 411 Assignment 1},
+		pdfpagemode = UseNone
+}
+
+\begin{document}
+\title{CS411: Assignment 1, Threading}
+\author{Robert Adams}
+\maketitle
+
+
+\section{What do you think the main point of this assignment is? }
+
+
+I believe the assignment is designed to give us an introduction to threading.
+The matrix multiplication problem was assigned to show us the potential
+speedups of threading when there is no synchronization required on an 
+n\verb|^|2 problem. The dining philosophers problem was assigned to introduce 
+us to mutexes and  show us the possible complexities of thread synchronization. 
+
+
+\section{How did you approach the problem? Design decisions, algorithm, etc.}
+
+
+The dining philosophers problem was entirely too complex to create my own solution.
+I used code designed in a very similar fashion to the solution presented in the
+book. Of note is that hungry philosophers block in the take\_fork function until
+a philosopher finished eating runs test(LEFT) and test(RIGHT). This prevents 
+hungry philosophers from needlessly spinning and wasting system resources.
+
+
+For the matrix multiplication problem I found the most efficient way to divide 
+the work was by columns. Total columns are divided by the number of threads and
+each thread takes responsibility for its section. The last thread will handle 
+any odd additional columns. This approach allowed me to use any number of threads
+for any number of columns.
+
+
+To fill the arrays random numbers I used the boost libraries Mersenne Twister
+generator seeded with the systems microseconds. This generator should give me
+a uniform distribution up to 623 dimensions, not that I really understand 
+that, but I know it’s good.
+
+
+I wished to make my file input function as flexible as possible so I chose
+to use C++’s \verb|<<| operator which parses a file and returns the next word using 
+spaces, tabs, or line breaks, as separators. If EOF is reached the remaining
+spots in the matrixes are filled with zeros.
+
+\section{How did you ensure your solution was correct? Testing details, for instance.}
+
+
+To test my matrix multiplication algorithm I first ran it for smaller matrices
+with fixed values, manually checking the result on paper to ensure the multiplication
+is correct. To test that my algorithm is splitting work correctly among threads I
+used print statements which may be seen with the verbose, -v, flag, which print
+the range each thread is about to calculate. I used gdb to step through my seria
+l implementation of matrix multiplication.
+
+
+To test the dining philosophers problem I stepped through it with a debugger
+using many breakpoints to catch switches between threads.
+
+
+\section{What did you learn?}
+
+
+I learned that threading can, in certain cases, cause significant speedups.
+I also saw that multiple threads which must share limited resources must be 
+synchronized, and if done incorrectly, can deadlock, can take more resources
+then a serial algorithm, or may end up effectively serialized after
+attempting to add synchronization. 
+
+\section{Test Machine System Specs}
+
+Intel(R) Core(TM) i5-2415M CPU @ 2.30GHz 
+
+Number of Processors: 1
+
+Total Number of Cores: 2
+
+L2 Cache (per Core): 256 KB
+
+L3 Cache: 3 MB
+
+Memory: 4 GB
+
+OSX 10.7
+
+
+\begin{figure}[p]
+		\centering
+		\input{plot.tex}
+		\caption{seconds to complete multiplication on an NxN matrix }
+		\label{runtimes}
+\end{figure}
+
+
+\begin{figure}[p]
+		\centering
+		\input{plot_threads.tex}
+		\caption{seconds to complete multiplication on an 1000x1000
+		matrix}
+		\label{runtimes}
+\end{figure}
+
+\end{document}

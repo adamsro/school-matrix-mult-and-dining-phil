@@ -4,7 +4,7 @@ dining_phil.o:
 	g++ -ggdb3 -Wall -lpthread dining_phil.cpp -o dining_phil
 
 matrix_mult.o:
-	g++ -ggdb3 -Wall -lpthread -lboost_thread-mt matrix_mult.cpp -o matrix_mult
+	g++ -ggdb3 -Wall -lboost_thread-mt matrix_mult.cpp -o matrix_mult
 
 clean:
 	rm -rf *o dining_phil main.dvi main.ps main.pdf main.log main.aux main.out dining_phil.dSYM

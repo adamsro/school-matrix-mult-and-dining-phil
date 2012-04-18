@@ -26,20 +26,22 @@
 #include <boost/random.hpp>
 #include <boost/thread.hpp>
 
-#define THREADS 4
-
-#if !defined(N)
-#define N 10 
+#if !defined(THREADS)
+#define THREADS 10
 #endif
 
-void fillMatrixRand(float* m);
-void fillMatrix(float* ptr, float val);
-void fillMatrixFile(float* a, float*b, char*optarg);
-void printmatrix(float* ptr);
-void doCalculate(int id);
+#if !defined(N)
+#define N 1000 
+#endif
+
+void fill_matrix_rand(float* m);
+void fill_matrix_val(float* ptr, float val);
+void fill_matrix_file(float* a, float*b, char*optarg);
+void print_matrix(float* ptr);
+void calculate(int id);
 
 float a[N][N], b[N][N], c[N][N];
-typedef boost::minstd_rand base_generator_type;
+typedef boost::mt19937 base_generator_type;
 int opt, file_flag, serial_flag,  verbose_flag;
 
 int main(int argc, char *argv[]) {
@@ -73,27 +75,30 @@ int main(int argc, char *argv[]) {
 				}
 
 		if(file_flag == 1) {
-				fillMatrixFile(*a, *b, optarg);
+				fill_matrix_file(*a, *b, optarg);
 		} else {
-				fillMatrixRand(a[0]);
-				fillMatrixRand(b[0]);
-				fillMatrix(c[0], 0);
+        fill_matrix_rand(a[0]);
+        fill_matrix_rand(b[0]);
+        fill_matrix_val(c[0], 0);
 		}
 
 		// for testing
-		//fillMatrix(a[0], 1.0);
-		//fillMatrix(b[0], 2.0);
-		//fillMatrix(c[0], 0);
+    //fill_matrix_val(a[0], 1.0);
+    //fill_matrix_val(b[0], 2.0);
+    //fill_matrix_val(c[0], 0);
 
 		if(verbose_flag == 1) {
 				printf("==== Maatrix A ====\n");
-				printmatrix(a[0]);
+				print_matrix(a[0]);
 				printf("==== Maatrix B ====\n");
-				printmatrix(b[0]);
+				print_matrix(b[0]);
 		}
 
 		start = clock();
 		if(serial_flag == 1) { // no threads, just pound it out.
+				if(verbose_flag == 1) {
+						std::cout << "serial\n\n";
+				}
 				for (int i = 0; i < N; i++) {
 						for (int j = 0; j < N; j++) {
 								for (int k = 0; k < N; k++) {
@@ -104,19 +109,22 @@ int main(int argc, char *argv[]) {
 		} else {
 				boost::thread_group g;
 				for(int i = 1; i <= THREADS; ++i) {
-						boost::thread *t = new boost::thread(&doCalculate, i);
+						boost::thread *t = new boost::thread(&calculate, i);
 						g.add_thread(t);
 				}
 				g.join_all();
 		}
 		theend = clock();
 
-		printmatrix(*c);
+//		print_matrix(*c);
 
 		ncpus = sysconf(_SC_NPROCESSORS_ONLN);
 		total_time = (((double) (theend - start)) / (double) CLOCKS_PER_SEC);
-		printf("%d\t%.6f\n", N, total_time / (THREADS < ncpus ? THREADS : ncpus));
-		
+    if(serial_flag == 1) {
+        printf("%d\t%.6f\n", N, total_time); 
+    } else {
+        printf("%d\t%.6f\n", N, total_time / (THREADS < ncpus ? THREADS : ncpus));
+    }
 		exit(0);
 }
 
@@ -124,7 +132,7 @@ int main(int argc, char *argv[]) {
  * this is the function executed by each thread
  * columns are split into N sections. one for each thread
  */
-void doCalculate(int id) {
+void calculate(int id) {
 		int rowsperprocess = N / THREADS;
 		int startpoint, endpoint;
 		startpoint = (id - 1) * rowsperprocess;
@@ -133,9 +141,9 @@ void doCalculate(int id) {
 		} else {
 				endpoint = startpoint + rowsperprocess;
 		}
-		if(verbose_flag == 1) {
+		//if(verbose_flag == 1) {
 				printf("id = %d perprocess = %d startpoint = %d and endpoint = %d\n", id, endpoint - startpoint, startpoint, endpoint);
-		}
+		//}
 		for (int i = startpoint; i < endpoint; i++) {
 				for (int j = 0; j < N; j++) {
 						for (int k = 0; k < N; k++) {
@@ -148,7 +156,7 @@ void doCalculate(int id) {
 /*
  * Set all values in a Matrix to a single value
  */
-void fillMatrix(float* m, float val) {
+void fill_matrix_val(float* m, float val) {
 		for (int p = 0; p < N; p++) {
 				for (int q = 0; q < N; q++) {
 						m[p * N + q] = val;
@@ -159,7 +167,7 @@ void fillMatrix(float* m, float val) {
 /*
  * Fill a matrix with random values.
  */
-void fillMatrixRand(float* m) {
+void fill_matrix_rand(float* m) {
 		timeval t;
 		gettimeofday(&t,NULL);
 		base_generator_type generator(t.tv_usec);
@@ -178,7 +186,7 @@ void fillMatrixRand(float* m) {
  *
  * If eof is reached, fill remaining spaces with zeros.
  */
-void fillMatrixFile(float* a, float*b, char*optarg) {
+void fill_matrix_file(float* a, float*b, char*optarg) {
 		std::string word;
 		std::ifstream myfile;
 
@@ -207,7 +215,7 @@ void fillMatrixFile(float* a, float*b, char*optarg) {
 /*
  * Print Matrix to console
  */
-void printmatrix(float* m) {
+void print_matrix(float* m) {
 		for (int p = 0; p < N; p++) {
 				for (int q = 0; q < N; q++) {
 						printf("%6.2f\t", m[p * N + q]);

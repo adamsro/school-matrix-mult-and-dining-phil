@@ -1,8 +1,18 @@
-
 /*
-	 - by chamika deshan
-http://www.planet-source-code.com/vb/scripts/ShowCode.asp?txtCodeId=12491&lngWId=3
-*/
+ * Original Author:  chamika deshan
+ * File: matrix_mult.c
+ * Last Modified: 2012 April 17, 13:48 by Robert Adams (adamsro) 
+ * 
+ * This file will perform threaded or serial matrix multiplication
+ *  -f filename			read matrix input from a file
+ *  -v							print additional information
+ *  -s							do the multiplication serialy.
+ * 
+ * Adapted from code written by chamika deshan found at:
+ * 
+ * http://www.planet-source-code.com/vb/scripts/ShowCode.asp?txtCodeId=12491&lngWId=3
+ */	
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -11,6 +21,7 @@ http://www.planet-source-code.com/vb/scripts/ShowCode.asp?txtCodeId=12491&lngWId
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
+#include <time.h>
 
 #include <boost/random.hpp>
 #include <boost/thread.hpp>
@@ -23,19 +34,22 @@ http://www.planet-source-code.com/vb/scripts/ShowCode.asp?txtCodeId=12491&lngWId
 
 void fillMatrixRand(float* m);
 void fillMatrix(float* ptr, float val);
+void fillMatrixFile(float* a, float*b, char*optarg);
 void printmatrix(float* ptr);
 void doCalculate(int id);
 
 float a[N][N], b[N][N], c[N][N];
 typedef boost::minstd_rand base_generator_type;
-
-int opt, file_flag = 0, serial_flag = 0, verbose_flag = 0;
+int opt, file_flag, serial_flag,  verbose_flag;
 
 int main(int argc, char *argv[]) {
-		pthread_t nothreads[THREADS + 1];
-		void *exitstat;
-		struct timeval start, stop;
-
+		file_flag = 0; 
+		serial_flag = 0;
+		verbose_flag = 0;
+    time_t start;
+    time_t theend;
+    long ncpus;
+    double total_time;
 
 		while ((opt = getopt (argc, argv, "svf:")) != -1)
 				switch (opt) {
@@ -44,6 +58,7 @@ int main(int argc, char *argv[]) {
 								break;
 						case 'v':
 								verbose_flag = 1; 
+								break;
 						case 'f': // read matrix from file
 								file_flag = 1; 
 								break;	
@@ -55,25 +70,10 @@ int main(int argc, char *argv[]) {
 								else
 										fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
 								return 1;
-								//default:
 				}
 
 		if(file_flag == 1) {
-				std::ifstream myfile;
-				char *cvalue = NULL;
-				cvalue = optarg;
-				myfile.open (cvalue);
-				std::cout << cvalue;
-				//while(std::cout << myfile) {
-				//;
-				//}
-				//int i = 0;
-				//for (int p = 0; p < N; p++) {
-				//for (int q = 0; q < N; q++) {
-				//m[p * N + q] = val[i++];
-				//}
-				//}
-				myfile.close();	
+				fillMatrixFile(*a, *b, optarg);
 		} else {
 				fillMatrixRand(a[0]);
 				fillMatrixRand(b[0]);
@@ -86,13 +86,14 @@ int main(int argc, char *argv[]) {
 		//fillMatrix(c[0], 0);
 
 		if(verbose_flag == 1) {
-				printf("====Maatrix A====\n");
+				printf("==== Maatrix A ====\n");
 				printmatrix(a[0]);
-				printf("====Maatrix B====\n");
+				printf("==== Maatrix B ====\n");
 				printmatrix(b[0]);
 		}
 
-		if(serial_flag == 1) {
+		start = clock();
+		if(serial_flag == 1) { // no threads, just pound it out.
 				for (int i = 0; i < N; i++) {
 						for (int j = 0; j < N; j++) {
 								for (int k = 0; k < N; k++) {
@@ -101,32 +102,28 @@ int main(int argc, char *argv[]) {
 						}
 				}
 		} else {
-
-				gettimeofday(&start, 0);
-				//-- thread creation goes here
-				boost::thread workerThread(boost::bind(&doCalculate, 1));
-				workerThread.join();
-				//for (long i = 1; i <= THREADS; i++) {
-				//if (pthread_create(&nothreads[i], NULL, doCalculate, (void *) i) != 0)
-				//perror("Thread creation failed");
-				//}
-				////-- thread joining goes here
-				//for (long i = 1; i <= THREADS; i++) {
-				//if (pthread_join(nothreads[i], &exitstat) != 0)
-				//perror("joining failed");
-				//}
-				gettimeofday(&stop, 0);
+				boost::thread_group g;
+				for(int i = 1; i <= THREADS; ++i) {
+						boost::thread *t = new boost::thread(&doCalculate, i);
+						g.add_thread(t);
+				}
+				g.join_all();
 		}
-		if(verbose_flag == 1) {
-				fprintf(stdout, "Time = %.6f\n\n",
-								(stop.tv_sec + stop.tv_usec * 1e-6)-(start.tv_sec + start.tv_usec * 1e-6));
-				printmatrix(*c);
-		}
+		theend = clock();
 
+		printmatrix(*c);
+
+		ncpus = sysconf(_SC_NPROCESSORS_ONLN);
+		total_time = (((double) (theend - start)) / (double) CLOCKS_PER_SEC);
+		printf("%d\t%.6f\n", N, total_time / (THREADS < ncpus ? THREADS : ncpus));
+		
 		exit(0);
 }
 
-//---- this is the function executed by each thread
+/*
+ * this is the function executed by each thread
+ * columns are split into N sections. one for each thread
+ */
 void doCalculate(int id) {
 		int rowsperprocess = N / THREADS;
 		int startpoint, endpoint;
@@ -148,6 +145,9 @@ void doCalculate(int id) {
 		}
 }
 
+/*
+ * Set all values in a Matrix to a single value
+ */
 void fillMatrix(float* m, float val) {
 		for (int p = 0; p < N; p++) {
 				for (int q = 0; q < N; q++) {
@@ -156,7 +156,9 @@ void fillMatrix(float* m, float val) {
 		}
 }
 
-
+/*
+ * Fill a matrix with random values.
+ */
 void fillMatrixRand(float* m) {
 		timeval t;
 		gettimeofday(&t,NULL);
@@ -166,10 +168,42 @@ void fillMatrixRand(float* m) {
 		for (int p = 0; p < N; p++) {
 				for (int q = 0; q < N; q++) {
 						m[p * N + q] = uni();
-						//m[p * N + q] = getRandom(-10.f, 10.f);
 				}
 		}
 }
+
+/* 
+ * Read each word in a file, try to convert it to a float, 
+ * then set it to the next free element in matrix a & b
+ *
+ * If eof is reached, fill remaining spaces with zeros.
+ */
+void fillMatrixFile(float* a, float*b, char*optarg) {
+		std::string word;
+		std::ifstream myfile;
+
+		std::cout << optarg;
+		myfile.open(optarg);
+
+		for (int p = 0; p < N; p++) {
+				for (int q = 0; q < N; q++) {
+						if(myfile >> word) { 
+								b[p * N + q] = atof(word.c_str());
+						}
+						b[p * N + q] = 0;
+				}
+		}
+		for (int p = 0; p < N; p++) {
+				for (int q = 0; q < N; q++) {
+						if(myfile >> word) {
+								b[p * N + q] = atof(word.c_str());
+						}
+						b[p * N + q] = 0;
+				}
+		}
+		myfile.close();	
+}
+
 /*
  * Print Matrix to console
  */

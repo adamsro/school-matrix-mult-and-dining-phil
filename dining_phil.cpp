@@ -1,11 +1,14 @@
 /*
-Name        :   Dining Philosophers Problem
-Author      :   jishnu7
-Web         :   http://thecodecracker.com
-Date        :   26-Sep-2010
-Description :   C Program to solve Dining philosophers problem
-License     :   GNU GPL License
-*/
+ * Original Author:  jishnu7
+ * File: matrix_mult.c
+ * Last Modified: 2012 April 17, 13:48 by Robert Adams (adamsro) 
+ * 
+ * C Program to solve Dining philosophers problem
+ * 
+ * Adapted from code written by jishnu7 found at:
+ * 
+ * http://thecodecracker.com
+ */	
 
 #include <stdio.h>
 #include <semaphore.h>

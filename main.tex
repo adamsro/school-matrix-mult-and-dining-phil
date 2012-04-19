@@ -35,7 +35,7 @@
 		urlcolor = black,
 		pdfauthor = {\name},
 		pdfkeywords = {cs411``operating systems},
-		pdftitle = {CS411: Assignment 1, Threading},
+		pdftitle = {CS411 Assignment 1: Threading},
 		pdfsubject = {CS 411 Assignment 1},
 		pdfpagemode = UseNone
 }
@@ -107,6 +107,17 @@ I also saw that multiple threads which must share limited resources must be
 synchronized, and if done incorrectly, can deadlock, can take more resources
 then a serial algorithm, or may end up effectively serialized after
 attempting to add synchronization. 
+
+\section{Analysis of Results}
+
+
+	By threading the matrix multiplication algorithm I was able to obtain a
+	2.3x speedup at 3000 elements on my personal computer (see system specifications below).
+	As seen in charts below I was able to achieve dramatic speedups up until 4
+	threads, at which point the performance remained level. This is because I
+	am using a 2 core pentium with hyperthreading, so no more than 4 sets of 
+	instructions may run in parallel on my system.
+
 
 \section{Test Machine System Specs}
 

@@ -31,7 +31,7 @@
 #endif
 
 #if !defined(N)
-#define N 1000
+#define N 10
 #endif
 
 void fill_matrix_rand(float* m);
@@ -52,6 +52,7 @@ int main(int argc, char *argv[]) {
     time_t theend;
     long ncpus;
     double total_time;
+    char *cvalue = NULL;
 
     while ((opt = getopt(argc, argv, "svf:")) != -1)
         switch (opt) {
@@ -63,6 +64,7 @@ int main(int argc, char *argv[]) {
                 break;
             case 'f': // read matrix from file
                 file_flag = 1;
+                cvalue = optarg;
                 break;
             case '?':
                 if (optopt == 'f')
@@ -75,11 +77,12 @@ int main(int argc, char *argv[]) {
         }
 
     if (file_flag == 1) {
-        fill_matrix_file(*a, *b, optarg);
+        std::cout << cvalue;
+        fill_matrix_file(*a, *b, cvalue);
     } else {
         fill_matrix_rand(a[0]);
         fill_matrix_rand(b[0]);
-        fill_matrix_val(c[0], 0);
+        //fill_matrix_val(c[0], 0);
     }
 
     // for testing
@@ -116,7 +119,9 @@ int main(int argc, char *argv[]) {
     }
     theend = clock();
 
-    //		print_matrix(*c);
+    if(verbose_flag == 1) {
+        print_matrix(*c);
+    }
 
     ncpus = sysconf(_SC_NPROCESSORS_ONLN);
     total_time = (((double) (theend - start)) / (double) CLOCKS_PER_SEC);
@@ -186,7 +191,7 @@ void fill_matrix_rand(float* m) {
  *
  * If eof is reached, fill remaining spaces with zeros.
  */
-void fill_matrix_file(float* a, float*b, char*optarg) {
+void fill_matrix_file(float* a, float*b, char* optarg) {
     std::string word;
     std::ifstream myfile;
     myfile.open(optarg);
@@ -194,17 +199,19 @@ void fill_matrix_file(float* a, float*b, char*optarg) {
     for (int p = 0; p < N; p++) {
         for (int q = 0; q < N; q++) {
             if (myfile >> word) {
-                b[p * N + q] = atof(word.c_str());
+                a[p * N + q] = atof(word.c_str());
+            } else {
+                a[p * N + q] = 0;
             }
-            b[p * N + q] = 0;
         }
     }
     for (int p = 0; p < N; p++) {
         for (int q = 0; q < N; q++) {
             if (myfile >> word) {
                 b[p * N + q] = atof(word.c_str());
+            } else {
+                b[p * N + q] = 0;
             }
-            b[p * N + q] = 0;
         }
     }
     myfile.close();
